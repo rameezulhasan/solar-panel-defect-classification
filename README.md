@@ -53,7 +53,7 @@ The app allows a user to upload a solar panel image and get:
 - Confidence score
 - Full class-wise probability breakdown
 
-**Live Demo:** _[link to be added]_
+**Live Demo:** _[[link to be added](https://solar-panel-defect-classification.streamlit.app/)]_
 
 ## 🚀 Running Locally
 
