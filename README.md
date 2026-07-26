@@ -65,7 +65,7 @@ This separation keeps the model-serving logic independent from the UI, making th
   - Full class-wise probability breakdown
 - Interactive Swagger docs available at `/docs` on the FastAPI service for direct API testing
 
-**Live Demo:** _[link to be added]_
+**Live Demo:** _[[Visit Here ](https://solar-panel-defect-classification.streamlit.app/)]_
 
 ## 🚀 Running Locally
 
@@ -115,5 +115,6 @@ solar-panel-defect-classification/
 ```
 
 ## 📌 Notes
+
 
 This project was built primarily as a hands-on learning exercise — covering the full pipeline from raw image data, through CNNs and transfer learning, to a deployed application with a proper API/frontend split and Docker containerization.
