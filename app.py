@@ -1,7 +1,6 @@
 import json
-import numpy as np
 import streamlit as st
-import tensorflow as tf
+import requests
 from PIL import Image
 
 # =====================================================
@@ -15,32 +14,11 @@ st.set_page_config(
 )
 
 # =====================================================
-# Load Model
+# FastAPI backend ka URL
 # =====================================================
-
-@st.cache_resource
-def load_model():
-    model = tf.keras.models.load_model(
-        "best_model_efficientnetb0_finetuned.keras"
-    )
-    return model
-
-
-# =====================================================
-# Load Class Names
-# =====================================================
-
-@st.cache_data
-def load_class_names():
-
-    with open("class_names.json", "r") as f:
-        class_names = json.load(f)
-
-    return class_names
-
-
-model = load_model()
-class_names = load_class_names()
+# Local testing ke liye ye rakho, Docker mein deploy karte waqt
+# ye adjust karna hoga (jaise service name ya deployed URL)
+API_URL = "http://127.0.0.1:8000/predict"
 
 # =====================================================
 # Sidebar
@@ -56,13 +34,8 @@ with st.sidebar:
     st.write("### Input Size")
     st.write("224 × 224")
 
-    st.write("### Total Classes")
-    st.write(len(class_names))
-
-    st.write("### Classes")
-
-    for cls in class_names:
-        st.write(f"• {cls}")
+    st.write("### Backend")
+    st.write("FastAPI")
 
     st.markdown("---")
 
@@ -85,46 +58,9 @@ st.write(
 # =====================================================
 
 uploaded_file = st.file_uploader(
-
     "Choose an Image",
-
     type=["jpg", "jpeg", "png"]
-
 )
-
-# =====================================================
-# Image Preprocessing
-# =====================================================
-
-def preprocess_image(image):
-
-    image = image.convert("RGB")
-
-    image = image.resize((224,224))
-
-    image = np.array(image)
-
-    image = np.expand_dims(image, axis=0)
-
-    return image
-
-# =====================================================
-# Prediction
-# =====================================================
-
-def predict_image(image):
-
-    processed_image = preprocess_image(image)
-
-    prediction = model.predict(processed_image, verbose=0)
-
-    predicted_index = np.argmax(prediction)
-
-    predicted_class = class_names[predicted_index]
-
-    confidence = float(prediction[0][predicted_index])
-
-    return predicted_class, confidence, prediction[0]
 
 # =====================================================
 # Main UI
@@ -146,77 +82,61 @@ if uploaded_file is not None:
 
         with st.spinner("Analyzing Image..."):
 
-            predicted_class, confidence, probabilities = predict_image(image)
+            # Uploaded file ko FastAPI ko bhejna hai
+            # File pointer ko wapas start pe le jao (Streamlit ka uploaded_file ek stream hai)
+            uploaded_file.seek(0)
 
-        st.success("Prediction Completed Successfully")
+            files = {"file": (uploaded_file.name, uploaded_file, uploaded_file.type)}
 
-        st.markdown("---")
+            try:
+                response = requests.post(API_URL, files=files)
 
-        st.subheader("Prediction Result")
+                if response.status_code == 200:
+                    result = response.json()
 
-        st.metric(
+                    predicted_class = result["predicted_class"]
+                    confidence = result["confidence"]
+                    probabilities = result["all_probabilities"]
 
-            "Predicted Class",
+                    st.success("Prediction Completed Successfully")
 
-            predicted_class
+                    st.markdown("---")
 
-        )
+                    st.subheader("Prediction Result")
 
-        st.metric(
+                    st.metric("Predicted Class", predicted_class)
+                    st.metric("Confidence", f"{confidence*100:.2f}%")
 
-            "Confidence",
+                    if confidence >= 0.90:
+                        st.success("Very High Confidence Prediction")
+                    elif confidence >= 0.70:
+                        st.info("High Confidence Prediction")
+                    elif confidence >= 0.50:
+                        st.warning("Moderate Confidence Prediction")
+                    else:
+                        st.error("Low Confidence Prediction")
 
-            f"{confidence*100:.2f}%"
+                    st.markdown("---")
 
-        )
+                    st.subheader("Class Probabilities")
 
-        if confidence >= 0.90:
+                    # Probabilities ko sort karo highest se lowest
+                    sorted_probs = sorted(
+                        probabilities.items(),
+                        key=lambda x: x[1],
+                        reverse=True
+                    )
 
-            st.success("Very High Confidence Prediction")
+                    for class_name, probability in sorted_probs:
+                        st.write(f"**{class_name}**")
+                        st.progress(float(probability))
+                        st.write(f"{probability*100:.2f}%")
 
-        elif confidence >= 0.70:
+                else:
+                    st.error(f"API Error: {response.status_code} - {response.text}")
 
-            st.info("High Confidence Prediction")
-
-        elif confidence >= 0.50:
-
-            st.warning("Moderate Confidence Prediction")
-
-        else:
-
-            st.error("Low Confidence Prediction")
-
-        st.markdown("---")
-
-        st.subheader("Class Probabilities")
-
-        results = list(zip(class_names, probabilities))
-
-        results = sorted(
-
-            results,
-
-            key=lambda x: x[1],
-
-            reverse=True
-
-        )
-
-        for class_name, probability in results:
-
-            st.write(
-
-                f"**{class_name}**"
-
-            )
-
-            st.progress(float(probability))
-
-            st.write(
-
-                f"{probability*100:.2f}%"
-
-            )
+            except requests.exceptions.ConnectionError:
+                st.error("Could not connect to the backend API. Make sure FastAPI server is running.")
 
 # =====================================================
 # Footer
@@ -225,5 +145,5 @@ if uploaded_file is not None:
 st.markdown("---")
 
 st.caption(
-    "Developed using TensorFlow, EfficientNetB0 and Streamlit."
+    "Developed using TensorFlow, EfficientNetB0, FastAPI, and Streamlit."
 )

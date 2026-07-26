@@ -1,10 +1,10 @@
 # ☀️ Solar Panel Defect Classification
 
-A deep learning project to classify solar panel surface conditions into 6 categories using Convolutional Neural Networks (CNN) and Transfer Learning, deployed as an interactive Streamlit web app.
+A deep learning project to classify solar panel surface conditions into 6 categories using Convolutional Neural Networks (CNN) and Transfer Learning, served through a FastAPI backend with a Streamlit frontend, and containerized with Docker.
 
 ## 🔍 Problem Statement
 
-Solar panels lose efficiency due to various surface issues like dust accumulation, bird droppings, snow cover, and physical/electrical damage. Manually inspecting large solar farms is time-consuming. This project builds an image classification model that automatically detects the condition of a solar panel from an image.
+Solar panels lose efficiency due to various surface issues like dust accumulation, bird droppings, snow cover, and physical/electrical damage. Manually inspecting large solar farms is time-consuming. This project builds an image classification system that automatically detects the condition of a solar panel from an image.
 
 ## 🗂️ Classes
 
@@ -34,7 +34,9 @@ All experiments (CNN, MobileNetV2, ResNet50, EfficientNetB0) are kept as separat
 - **TensorFlow / Keras** — model building and training
 - **EfficientNetB0** — final transfer learning backbone (fine-tuned)
 - **Google Colab** — training environment (GPU)
-- **Streamlit** — web app for interactive predictions
+- **FastAPI** — backend REST API serving the model
+- **Streamlit** — frontend web app for interactive predictions
+- **Docker** — containerized deployment
 
 ## 🏗️ Pipeline Overview
 
@@ -46,12 +48,22 @@ All experiments (CNN, MobileNetV2, ResNet50, EfficientNetB0) are kept as separat
   - **Phase 2:** Top layers of the base model unfrozen and fine-tuned with a low learning rate (BatchNorm layers kept frozen to preserve pretrained statistics)
 - Best model checkpointed based on validation loss, with early stopping to avoid overfitting
 
-## 🖥️ Streamlit App
+## 🏛️ Architecture
 
-The app allows a user to upload a solar panel image and get:
-- Predicted defect class
-- Confidence score
-- Full class-wise probability breakdown
+The app is split into two independent services:
+
+- **FastAPI (`main.py`)** — loads the trained model and exposes a `/predict` endpoint that accepts an image and returns the predicted class, confidence score, and full class-wise probability breakdown as JSON.
+- **Streamlit (`app.py`)** — a lightweight frontend where the user uploads an image; it sends the image to the FastAPI `/predict` endpoint and displays the result.
+
+This separation keeps the model-serving logic independent from the UI, making the system easier to scale, test, or swap the frontend for another client later.
+
+## 🖥️ App Features
+
+- Upload a solar panel image and get:
+  - Predicted defect class
+  - Confidence score
+  - Full class-wise probability breakdown
+- Interactive Swagger docs available at `/docs` on the FastAPI service for direct API testing
 
 **Live Demo:** _[link to be added]_
 
@@ -61,8 +73,26 @@ The app allows a user to upload a solar panel image and get:
 git clone https://github.com/rameezulhasan/solar-panel-defect-classification.git
 cd solar-panel-defect-classification
 pip install -r requirements.txt
+```
+
+**Terminal 1 — start the FastAPI backend:**
+```bash
+fastapi dev main.py --reload
+```
+
+**Terminal 2 — start the Streamlit frontend:**
+```bash
 streamlit run app.py
 ```
+
+## 🐳 Running with Docker
+
+```bash
+docker build -t solar-panel-api .
+docker run -p 8000:8000 solar-panel-api
+```
+
+The API will be available at `http://localhost:8000`, with interactive docs at `http://localhost:8000/docs`.
 
 ## 📁 Repository Structure
 
@@ -75,7 +105,9 @@ solar-panel-defect-classification/
 │   ├── with_resnet.ipynb                      # Transfer learning - ResNet50
 │   └── with_efficientnet.ipynb                # Transfer learning - EfficientNetB0 (final)
 │
-├── app.py                                     # Streamlit app
+├── app.py                                     # Streamlit frontend
+├── main.py                                    # FastAPI backend
+├── Dockerfile                                 # Container setup for the API
 ├── best_model_efficientnetb0_finetuned.keras  # Final trained model
 ├── class_names.json                           # Class label mapping
 ├── requirements.txt                           # Dependencies
@@ -84,4 +116,4 @@ solar-panel-defect-classification/
 
 ## 📌 Notes
 
-This project was built primarily as a hands-on learning exercise in CNNs and transfer learning — covering the full pipeline from raw image data to a deployed, interactive application.
+This project was built primarily as a hands-on learning exercise — covering the full pipeline from raw image data, through CNNs and transfer learning, to a deployed application with a proper API/frontend split and Docker containerization.

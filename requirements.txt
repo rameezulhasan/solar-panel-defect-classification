@@ -2,3 +2,6 @@ streamlit==1.59.2
 tensorflow==2.20.0
 numpy==1.26.4
 Pillow
+python-multipart
+fastapi
+fastapi[standard]
