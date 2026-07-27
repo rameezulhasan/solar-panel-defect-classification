@@ -2,7 +2,7 @@ import json
 import streamlit as st
 import requests
 from PIL import Image
-
+import os
 # =====================================================
 # Page Configuration
 # =====================================================
@@ -18,7 +18,7 @@ st.set_page_config(
 # =====================================================
 # Local testing ke liye ye rakho, Docker mein deploy karte waqt
 # ye adjust karna hoga (jaise service name ya deployed URL)
-API_URL = "http://127.0.0.1:8000/predict"
+API_URL = os.getenv("API_URL","http://localhost:8000/predict")
 
 # =====================================================
 # Sidebar
@@ -73,12 +73,12 @@ if uploaded_file is not None:
     st.image(
         image,
         caption="Uploaded Image",
-        use_container_width=True
+        width='stretch'
     )
 
     st.write("")
 
-    if st.button("Predict Defect", use_container_width=True):
+    if st.button("Predict Defect", width='stretch'):
 
         with st.spinner("Analyzing Image..."):
 
