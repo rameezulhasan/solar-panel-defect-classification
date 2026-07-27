@@ -1,23 +1,17 @@
-version: '3.8'
+version: "3.8"
 
 services:
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile.api
     image: rameez49/solar-panel-api:latest
+    container_name: solar-panel-api
     ports:
       - "8000:8000"
-    container_name: solar-panel-api
 
   streamlit:
-    build:
-      context: .
-      dockerfile: Dockerfile.streamlit
     image: rameez49/solar-panel-ui:latest
+    container_name: solar-panel-ui
     ports:
       - "8501:8501"
-    container_name: solar-panel-ui
     depends_on:
       - api
     environment:
