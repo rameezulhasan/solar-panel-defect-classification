@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual Environment
+venv/
+.venv/
+
+# Git
+.git/
+.gitignore
+
+# Jupyter
+notebooks/
+*.ipynb
+
+# VS Code
+.vscode/
+
+# Environment
+.env
+
+# Cache
+.pytest_cache/
+
+# OS Files
+.DS_Store
+Thumbs.db

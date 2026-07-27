@@ -1,14 +1,22 @@
 # ☀️ Solar Panel Defect Classification
 
-A deep learning project to classify solar panel surface conditions into 6 categories using Convolutional Neural Networks (CNN) and Transfer Learning, served through a FastAPI backend with a Streamlit frontend, and containerized with Docker.
+A deep learning project that classifies solar panel surface conditions into **6 categories** using **Convolutional Neural Networks (CNNs)** and **Transfer Learning**. The application follows a **client-server architecture**, where a **Streamlit frontend** communicates with a **FastAPI backend** for model inference. Both services are containerized using Docker and can be deployed locally or on AWS EC2 using Docker Compose.
 
-## 🔍 Problem Statement
+---
 
-Solar panels lose efficiency due to various surface issues like dust accumulation, bird droppings, snow cover, and physical/electrical damage. Manually inspecting large solar farms is time-consuming. This project builds an image classification system that automatically detects the condition of a solar panel from an image.
+# 🔍 Problem Statement
 
-## 🗂️ Classes
+Solar panels gradually lose efficiency due to different types of surface contamination and damage such as dust accumulation, bird droppings, snow cover, and physical or electrical defects.
 
-The model classifies images into 6 categories:
+Manual inspection of large solar farms is expensive and time-consuming.
+
+This project automates the inspection process by classifying a solar panel image into its corresponding defect category using Deep Learning.
+
+---
+
+# 🗂️ Classes
+
+The model predicts one of the following six classes:
 
 - Clean
 - Bird-drop
@@ -17,104 +25,581 @@ The model classifies images into 6 categories:
 - Physical-Damage
 - Snow-Covered
 
-## 🧠 Approach
+---
 
-The project was built step by step, starting simple and moving toward more advanced techniques:
+# 🧠 Approach
 
-1. **Baseline CNN (from scratch)** — Started with a custom CNN built from the ground up (Conv2D + MaxPooling blocks) to understand core CNN concepts before jumping into transfer learning.
-2. **Transfer Learning — MobileNetV2 & ResNet50** — Tried multiple pretrained backbones (feature extraction + fine-tuning) to compare how different architectures perform on this dataset. Both were trained and fine-tuned, but the accuracy wasn't satisfactory enough to finalize.
-3. **Transfer Learning — EfficientNetB0** — This backbone gave noticeably better and more consistent accuracy than the CNN, MobileNetV2, and ResNet50 attempts, so it was selected as the final model used in the deployed app.
+The project was developed incrementally to understand different deep learning techniques before selecting the final model.
 
-Throughout the project, hyperparameters (learning rate, dropout, number of unfrozen layers, epochs, etc.) were tuned manually through iterative hit-and-trial experimentation rather than a fixed formula — adjusting one thing at a time and observing the effect on training/validation behavior.
+## 1. Custom CNN (From Scratch)
 
-All experiments (CNN, MobileNetV2, ResNet50, EfficientNetB0) are kept as separate notebooks in this repo for transparency, so the full comparison process is visible rather than just the final chosen model.
+The project started with a custom Convolutional Neural Network built from scratch using Conv2D and MaxPooling layers to understand the fundamentals of CNNs.
 
-## ⚙️ Tech Stack
+---
 
-- **TensorFlow / Keras** — model building and training
-- **EfficientNetB0** — final transfer learning backbone (fine-tuned)
-- **Google Colab** — training environment (GPU)
-- **FastAPI** — backend REST API serving the model
-- **Streamlit** — frontend web app for interactive predictions
-- **Docker** — containerized deployment
+## 2. Transfer Learning
 
-## 🏗️ Pipeline Overview
+After establishing a CNN baseline, multiple pretrained architectures were evaluated.
 
-- Dataset organized into class-wise folders and split into train/validation/test sets
-- Images resized to 224×224 and batched using `tf.data`
-- Data augmentation (random flip, rotation, zoom, contrast) applied to improve generalization on a limited dataset
-- Two-phase transfer learning:
-  - **Phase 1:** Base model frozen, only a custom classification head trained
-  - **Phase 2:** Top layers of the base model unfrozen and fine-tuned with a low learning rate (BatchNorm layers kept frozen to preserve pretrained statistics)
-- Best model checkpointed based on validation loss, with early stopping to avoid overfitting
+The following models were trained and fine-tuned:
 
-## 🏛️ Architecture
+- MobileNetV2
+- ResNet50
 
-The app is split into two independent services:
+Although these models improved performance compared to the baseline CNN, their results were not consistent enough for deployment.
 
-- **FastAPI (`main.py`)** — loads the trained model and exposes a `/predict` endpoint that accepts an image and returns the predicted class, confidence score, and full class-wise probability breakdown as JSON.
-- **Streamlit (`app.py`)** — a lightweight frontend where the user uploads an image; it sends the image to the FastAPI `/predict` endpoint and displays the result.
+---
 
-This separation keeps the model-serving logic independent from the UI, making the system easier to scale, test, or swap the frontend for another client later.
+## 3. EfficientNetB0 (Final Model)
 
-## 🖥️ App Features
+EfficientNetB0 achieved the highest validation accuracy and better generalization compared to all previous experiments.
 
-- Upload a solar panel image and get:
-  - Predicted defect class
+Therefore, it was selected as the final production model used in the deployed application.
+
+---
+
+## Hyperparameter Tuning
+
+Different hyperparameters were tuned manually through experimentation, including:
+
+- Learning Rate
+- Batch Size
+- Dropout
+- Number of Frozen Layers
+- Fine-Tuning Depth
+- Number of Epochs
+
+Instead of relying on fixed values, multiple experiments were conducted while monitoring validation accuracy and validation loss.
+
+---
+
+## Experiment Tracking
+
+All experiments are included inside the repository as separate notebooks.
+
+They include:
+
+- CNN from Scratch
+- MobileNetV2
+- ResNet50
+- EfficientNetB0 (Final)
+
+This allows anyone reviewing the project to understand the complete experimentation process rather than only the final model.
+
+---
+
+# ⚙️ Tech Stack
+
+### Deep Learning
+
+- TensorFlow
+- Keras
+- EfficientNetB0
+
+### Backend
+
+- FastAPI
+
+### Frontend
+
+- Streamlit
+
+### Deployment
+
+- Docker
+- Docker Compose
+- Docker Hub
+- AWS EC2
+
+### Training Environment
+
+- Google Colab (GPU)
+
+---
+
+# 🏗️ Model Training Pipeline
+
+The training pipeline consists of the following stages.
+
+- Dataset organized into class-wise folders.
+- Dataset split into Train / Validation / Test sets.
+- Images resized to **224 × 224**.
+- Images loaded using **tf.data**.
+- Data augmentation applied:
+  - Random Flip
+  - Random Rotation
+  - Random Zoom
+  - Random Contrast
+- Transfer Learning performed in two phases.
+
+### Phase 1
+
+The pretrained EfficientNetB0 backbone remained frozen while only the custom classification head was trained.
+
+### Phase 2
+
+The upper layers of EfficientNetB0 were unfrozen and fine-tuned using a lower learning rate.
+
+Batch Normalization layers remained frozen to preserve pretrained statistics.
+
+The best model was automatically saved using ModelCheckpoint, while EarlyStopping prevented overfitting.
+
+---
+
+# 🏛️ Application Architecture
+
+The application is divided into two independent services.
+
+## FastAPI Backend
+
+The backend is responsible for:
+
+- Loading the trained TensorFlow model
+- Receiving uploaded images
+- Performing preprocessing
+- Running inference
+- Returning predictions as JSON
+
+The prediction response contains:
+
+- Predicted class
+- Confidence score
+- Probability for every class
+
+---
+
+## Streamlit Frontend
+
+The frontend provides an interactive web interface where users can:
+
+- Upload an image
+- Preview the uploaded image
+- Send the image to the FastAPI backend
+- Display:
+  - Predicted class
   - Confidence score
-  - Full class-wise probability breakdown
-- Interactive Swagger docs available at `/docs` on the FastAPI service for direct API testing
+  - Class-wise probabilities
 
-**Live Demo:** _[[Visit Here ](https://solar-panel-defect-classification.streamlit.app/)]_
+The frontend never performs inference itself.
 
-## 🚀 Running Locally
+All predictions are generated by the FastAPI backend through REST API calls.
+
+---
+
+# 🏗️ Overall Architecture
+
+```
+
+User
+│
+▼
+Streamlit Frontend
+│
+│ HTTP Request
+▼
+FastAPI Backend
+│
+▼
+TensorFlow Model
+│
+▼
+Prediction
+│
+▼
+Streamlit UI
+
+```
+
+This separation keeps the UI independent from the model-serving logic, making the application easier to maintain, scale, test, and deploy.
+
+---
+
+# 🖥️ Application Features
+
+The application provides:
+
+- Upload solar panel images
+- Automatic defect classification
+- Confidence score
+- Complete probability distribution across all classes
+- FastAPI Swagger documentation
+- Separate frontend and backend services
+- Dockerized deployment
+- Docker Compose deployment
+- AWS EC2 deployment support
+
+---
+
+# 📦 Docker Images
+
+The project is published on Docker Hub.
+
+### Backend
+
+```bash
+docker pull rameez49/solar-panel-api:latest
+```
+
+### Frontend
+
+```bash
+docker pull rameez49/solar-panel-ui:latest
+```
+
+---
+
+# 🌐 Live Demo
+
+**Streamlit App**
+
+https://solar-panel-defect-classification.streamlit.app/
+
+# 🚀 Running Locally
+
+## 1. Clone the Repository
 
 ```bash
 git clone https://github.com/rameezulhasan/solar-panel-defect-classification.git
+
 cd solar-panel-defect-classification
+```
+
+---
+
+## 2. Create a Virtual Environment
+
+### Windows
+
+```bash
+python -m venv venv
+
+venv\Scripts\activate
+```
+
+### Linux / macOS
+
+```bash
+python3 -m venv venv
+
+source venv/bin/activate
+```
+
+---
+
+## 3. Install Dependencies
+
+### Backend
+
+```bash
+cd backend
+
 pip install -r requirements.txt
 ```
 
-**Terminal 1 — start the FastAPI backend:**
+Open another terminal.
+
+### Frontend
+
 ```bash
-fastapi dev main.py --reload
+cd frontend
+
+pip install -r requirements.txt
 ```
 
-**Terminal 2 — start the Streamlit frontend:**
+---
+
+## 4. Run the FastAPI Backend
+
 ```bash
+cd backend
+
+fastapi run main.py --reload
+```
+
+Backend:
+
+```
+http://localhost:8000
+```
+
+Swagger API Documentation:
+
+```
+http://localhost:8000/docs
+```
+
+---
+
+## 5. Run the Streamlit Frontend
+
+Open another terminal.
+
+```bash
+cd frontend
+
 streamlit run app.py
 ```
 
-## 🐳 Running with Docker
+Frontend:
 
-```bash
-docker build -t solar-panel-api .
-docker run -p 8000:8000 solar-panel-api
+```
+http://localhost:8501
 ```
 
-The API will be available at `http://localhost:8000`, with interactive docs at `http://localhost:8000/docs`.
+---
 
-## 📁 Repository Structure
+# 🐳 Running with Docker
+
+## Build Backend Image
+
+```bash
+docker build -t rameez49/solar-panel-api:latest ./backend
+```
+
+---
+
+## Build Frontend Image
+
+```bash
+docker build -t rameez49/solar-panel-ui:latest ./frontend
+```
+
+---
+
+## Create Docker Network
+
+```bash
+docker network create solar-network
+```
+
+---
+
+## Run Backend Container
+
+```bash
+docker run -d --name api --network solar-network -p 8000:8000 rameez49/solar-panel-api:latest
+```
+
+---
+
+## Run Frontend Container
+
+```bash
+docker run -d --name ui --network solar-network -e API_URL=http://api:8000/predict -p 8501:8501 rameez49/solar-panel-ui:latest
+```
+
+---
+
+## Access the Application
+
+### Streamlit
+
+```
+http://localhost:8501
+```
+
+### FastAPI Swagger Docs
+
+```
+http://localhost:8000/docs
+```
+
+---
+
+# ☁️ Running with Docker Compose
+
+The project includes a deployment-ready **docker-compose.yaml** file.
+
+Simply run:
+
+```bash
+docker compose up -d
+```
+
+Docker Compose will automatically:
+
+- Pull the backend image from Docker Hub
+- Pull the frontend image from Docker Hub
+- Create the required Docker network
+- Start both containers
+
+Once both containers are running, open:
+
+### Streamlit
+
+```
+http://localhost:8501
+```
+
+### FastAPI Swagger Docs
+
+```
+http://localhost:8000/docs
+```
+
+To stop both services:
+
+```bash
+docker compose down
+```
+
+---
+
+# ☁️ Deploying on AWS EC2
+
+## 1. Launch an Ubuntu EC2 Instance
+
+Create an Ubuntu EC2 instance and allow inbound traffic for:
+
+- SSH (22)
+- FastAPI (8000)
+- Streamlit (8501)
+
+---
+
+## 2. Install Docker
+
+```bash
+sudo apt update
+
+sudo apt install docker.io -y
+```
+
+---
+
+## 3. Install Docker Compose
+
+```bash
+sudo apt update
+
+sudo apt install docker-compose-v2 -y
+```
+
+---
+
+## 4. Create a Project Folder
+
+```bash
+mkdir solar-panel
+
+cd solar-panel
+```
+
+---
+
+## 5. Create the Docker Compose File
+
+```bash
+nano docker-compose.yaml
+```
+
+Paste the following:
+
+```yaml
+services:
+  api:
+    image: rameez49/solar-panel-api:latest
+    container_name: solar-panel-api
+    ports:
+      - "8000:8000"
+
+  streamlit:
+    image: rameez49/solar-panel-ui:latest
+    container_name: solar-panel-ui
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
+    environment:
+      API_URL: http://api:8000/predict
+```
+
+Save the file.
+
+---
+
+## 6. Start the Application
+
+```bash
+sudo docker compose up -d
+```
+
+Docker Compose will automatically:
+
+- Pull both Docker images
+- Create the Docker network
+- Start the backend
+- Start the frontend
+
+---
+
+## 7. Verify Running Containers
+
+```bash
+sudo docker ps
+```
+
+---
+
+## 8. Access the Application
+
+Replace `<EC2-PUBLIC-IP>` with your instance's public IP address.
+
+### Streamlit
+
+```
+http://<EC2-PUBLIC-IP>:8501
+```
+
+### FastAPI Documentation
+
+```
+http://<EC2-PUBLIC-IP>:8000/docs
+```
+
+---
+
+# 📁 Repository Structure
 
 ```
 solar-panel-defect-classification/
+
+│
+
+├── backend/
+│   ├── main.py
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   ├── best_model_efficientnetb0_finetuned.keras
+│   └── class_names.json
+│
+├── frontend/
+│   ├── app.py
+│   ├── Dockerfile
+│   └── requirements.txt
 │
 ├── notebooks/
-│   ├── with_cnn.ipynb                         # Baseline CNN from scratch
-│   ├── with_mobilenet.ipynb                   # Transfer learning - MobileNetV2
-│   ├── with_resnet.ipynb                      # Transfer learning - ResNet50
-│   └── with_efficientnet.ipynb                # Transfer learning - EfficientNetB0 (final)
+│   ├── with_cnn.ipynb
+│   ├── with_mobilenet.ipynb
+│   ├── with_resnet.ipynb
+│   └── with_efficientnet.ipynb
 │
-├── app.py                                     # Streamlit frontend
-├── main.py                                    # FastAPI backend
-├── Dockerfile                                 # Container setup for the API
-├── best_model_efficientnetb0_finetuned.keras  # Final trained model
-├── class_names.json                           # Class label mapping
-├── requirements.txt                           # Dependencies
+├── .dockerignore
+├── docker-compose.yaml
 └── README.md
 ```
 
-## 📌 Notes
+---
 
 
-This project was built primarily as a hands-on learning exercise — covering the full pipeline from raw image data, through CNNs and transfer learning, to a deployed application with a proper API/frontend split and Docker containerization.
+# 📌 Notes
+
+- This project was built as a hands-on deep learning project covering the complete workflow from data preprocessing to deployment.
+- Multiple CNN and transfer learning architectures were evaluated before selecting EfficientNetB0 as the final model.
+- The application follows a client-server architecture using Streamlit and FastAPI.
+- Docker was used to containerize both frontend and backend services.
+- Docker Compose simplifies multi-container deployment.
+- The application can be deployed locally or on AWS EC2 without modifying the source code.
+
+---
+
